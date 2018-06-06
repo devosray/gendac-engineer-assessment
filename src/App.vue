@@ -1,9 +1,8 @@
 <template>
   <div>
-    <Navbar></Navbar>
+    <Navbar/>
 
     <b-container id="app">
-      <img src="./assets/logo.png">
       <router-view/>
     </b-container>
 
