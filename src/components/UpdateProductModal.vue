@@ -48,7 +48,7 @@ export default {
 
     ok (event) {
       // Submit update request
-      event.cancel()
+      event.preventDefault()
       this.error = false
       this.busy = true
       const ref = this

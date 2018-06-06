@@ -1,8 +1,12 @@
 <template>
-  <div class="hello">
+  <div>
 
     <h2>Product List</h2>
     <br/>
+
+    <b-alert v-if="error" show variant="danger">{{errorMessage}}</b-alert>
+
+    <b-alert :show="showInfoAlert" variant="info" dismissible>{{infoAlertMessage}}</b-alert>
 
     <b-alert v-if="loading" show variant="primary">Fetching products...</b-alert>
     <table v-else class="table">
@@ -13,7 +17,7 @@
         <th scope="col">Category</th>
         <th scope="col">Price</th>
         <th scope="col"></th>
-        <th scope="col"></th>
+        <th scope="col"><button @click="createProduct" type="button" class="btn btn-outline-success">Create Product</button></th>
       </tr>
       </thead>
       <tbody>
@@ -26,7 +30,7 @@
           <button @click="showModal(product.id)" type="button" class="btn btn-outline-primary">Edit</button>
         </td>
         <td>
-          <button type="button" class="btn btn-outline-danger">Delete</button>
+          <button @click="deleteProduct(product.id)" type="button" class="btn btn-outline-danger">Delete</button>
         </td>
       </tr>
       </tbody>
@@ -34,43 +38,8 @@
 
     <br/>
 
-    <h2>TODO: About Me</h2>
-    <ul>
-      <li>
-        <a
-          href="http://router.vuejs.org/"
-          target="_blank"
-        >
-          vue-router
-        </a>
-      </li>
-      <li>
-        <a
-          href="http://vuex.vuejs.org/"
-          target="_blank"
-        >
-          vuex
-        </a>
-      </li>
-      <li>
-        <a
-          href="http://vue-loader.vuejs.org/"
-          target="_blank"
-        >
-          vue-loader
-        </a>
-      </li>
-      <li>
-        <a
-          href="https://github.com/vuejs/awesome-vue"
-          target="_blank"
-        >
-          awesome-vue
-        </a>
-      </li>
-    </ul>
-
     <UpdateProductModal ref="updateModal"/>
+    <CreateProductModal ref="createModal" @productCreated="showInfoMessage('New product created.')"/>
 
   </div>
 </template>
@@ -78,6 +47,7 @@
 <script>
 import axios from 'axios'
 import UpdateProductModal from './UpdateProductModal'
+import CreateProductModal from './CreateProductModal'
 
 // Object representing a single item in the database
 function Product (obj) {
@@ -103,11 +73,16 @@ function Product (obj) {
 
 export default {
   name: 'ProductList',
-  components: {UpdateProductModal},
+  components: {CreateProductModal, UpdateProductModal},
   data () {
     return {
       products: [],
-      loading: true
+      loading: true,
+      error: false,
+      errorMessage: '',
+
+      showInfoAlert: false,
+      infoAlertMessage: ''
     }
   },
 
@@ -121,14 +96,39 @@ export default {
           })
           ref.loading = false
         }).catch(function (error) {
-          // todo proper error
-          console.log('error: ' + error)
+          ref.error = true
+          ref.errorMessage = 'Error while fetching products: ' + error
         })
+    },
+
+    deleteProduct (id) {
+      const shouldDelete = confirm('Are you sure you want to delete this product?')
+      let ref = this
+      if (shouldDelete) {
+        axios.delete('http://gendacproficiencytest.azurewebsites.net/api/ProductsAPI/' + id)
+          .then(function (response) {
+            let index = ref.products.findIndex(prod => prod.id === id)
+            ref.products.splice(index, 1)
+          })
+          .catch(function (error) {
+            ref.error = true
+            ref.errorMessage = 'Error while deleting product: ' + error
+          })
+      }
+    },
+
+    createProduct () {
+      this.$refs.createModal.show()
     },
 
     showModal (productId) {
       const product = this.products.find(prod => prod.id === productId)
       this.$refs.updateModal.show(product)
+    },
+
+    showInfoMessage (message) {
+      this.showInfoAlert = true
+      this.infoAlertMessage = message
     }
   },
 
